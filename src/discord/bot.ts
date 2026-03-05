@@ -36,7 +36,7 @@ export async function startDiscordBot(deps: Deps): Promise<Client> {
     }
 
     try {
-      await handleCommand(interaction, artifactService, deployService, convexService);
+      await handleCommand(interaction, config, artifactService, deployService, convexService);
     } catch (err) {
       const message = err instanceof Error ? err.message : "command failed";
       if (interaction.replied || interaction.deferred) {
@@ -53,6 +53,7 @@ export async function startDiscordBot(deps: Deps): Promise<Client> {
 
 async function handleCommand(
   interaction: ChatInputCommandInteraction,
+  config: EnvConfig,
   artifactService: ArtifactService,
   deployService: DeployService,
   convexService: ConvexService
@@ -160,6 +161,10 @@ async function handleCommand(
     case "convex": {
       const sub = interaction.options.getSubcommand();
       if (sub === "init") {
+        if (!config.operatorIds.has(interaction.user.id)) {
+          await interaction.reply({ content: "not authorized", ephemeral: true });
+          return;
+        }
         const appname = interaction.options.getString("appname", true);
         const result = await convexService.init(appname);
         await interaction.reply({
@@ -178,6 +183,10 @@ async function handleCommand(
         return;
       }
       if (sub === "remove") {
+        if (!config.operatorIds.has(interaction.user.id)) {
+          await interaction.reply({ content: "not authorized", ephemeral: true });
+          return;
+        }
         const appname = interaction.options.getString("appname", true);
         await convexService.remove(appname);
         await interaction.reply({ content: "convex instance removed", ephemeral: true });
