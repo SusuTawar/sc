@@ -1,0 +1,22 @@
+services:
+  servercommander:
+    build:
+      context: ../..
+      dockerfile: docker/test/Dockerfile
+    container_name: servercommander-test
+    environment:
+      SC_HTTP_PORT: 8080
+      SC_DATA_FILE: /data/servercommander.db
+      SC_LOG_DIR: /data/logs
+      SC_MASTER_KEY: dev-only-master-key
+      SC_WEBHOOK_SECRET: dev-only-webhook
+      SC_DISCORD_BOT_TOKEN: ""
+      SC_DISCORD_GUILD_ID: ""
+      SC_DISCORD_OPERATOR_IDS: ""
+      SC_DISCORD_APPROVER_IDS: ""
+      SC_CLOUDFLARE_API_TOKEN: ""
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8080:8080"

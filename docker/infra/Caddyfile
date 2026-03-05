@@ -1,0 +1,4 @@
+{
+	# Optional global email for ACME. Replace with your real email.
+	email {$CADDY_EMAIL}
+}
