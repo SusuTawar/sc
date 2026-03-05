@@ -132,6 +132,23 @@ services:
     networks:
       - infra
 
+  convex-dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    container_name: convex-dashboard
+    restart: unless-stopped
+    stop_grace_period: 10s
+    stop_signal: SIGINT
+    environment:
+      NEXT_PUBLIC_DEPLOYMENT_URL: ${SC_CONVEX_DASHBOARD_DEPLOYMENT_URL}
+      NEXT_PUBLIC_LOAD_MONACO_INTERNALLY: ${SC_CONVEX_DASHBOARD_LOAD_MONACO}
+    ports:
+      - "127.0.0.1:${SC_CONVEX_DASHBOARD_PORT:-6791}:6791"
+    networks:
+      - infra
+    labels:
+      caddy: ${SC_CONVEX_DASHBOARD_DOMAIN}
+      caddy.reverse_proxy: "{{upstreams 6791}}"
+
 volumes:
   caddy_data:
   caddy_config:

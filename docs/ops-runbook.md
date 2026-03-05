@@ -57,6 +57,13 @@ cd docker/infra
 docker compose exec redis sh -lc 'redis-cli -a "$REDIS_PASSWORD" ping'
 ```
 
+## Convex Dashboard Check
+
+```bash
+cd docker/infra
+docker compose logs --tail=100 convex-dashboard
+```
+
 ## Deployment Lifecycle
 
 1. CircleCI uploads artifact via webhook.

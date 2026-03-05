@@ -48,7 +48,7 @@ Flags:
 - If `caddy-proxy` already exists, remove it and rerun setup to mount the Caddyfile.
 - After each deployment, ServerCommander keeps the 5 most recent image tags per environment and prunes older tags for the app's image repo (best-effort; images in use are not removed).
 
-## Caddy + MySQL + PostgreSQL + Redis (Docker)
+## Caddy + MySQL + PostgreSQL + Redis + Convex Dashboard (Docker)
 
 Use this stack on a fresh host if you want Caddy and both databases via Docker:
 
@@ -65,6 +65,7 @@ Notes:
 
 - MySQL and PostgreSQL are bound to `127.0.0.1` only by default.
 - Redis is bound to `127.0.0.1` only by default.
+- Convex dashboard is bound to `127.0.0.1` only by default.
 - Change all default passwords in `.env` before starting.
 - `servercommander` app also runs as a container in this stack.
 - The app manages host Docker through `/var/run/docker.sock` mount.
