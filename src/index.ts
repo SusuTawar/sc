@@ -9,6 +9,7 @@ import { runMigrations } from "./db/runMigrations.js";
 import { startDiscordBot } from "./discord/bot.js";
 import { DockerClient } from "./docker/client.js";
 import { ArtifactService } from "./services/artifact.service.js";
+import { ConvexService } from "./services/convex.service.js";
 import { DeployService } from "./services/deploy.service.js";
 
 async function main(): Promise<void> {
@@ -31,6 +32,7 @@ async function main(): Promise<void> {
   const docker = new DockerClient();
   const deployService = new DeployService(db, docker, config);
   const artifactService = new ArtifactService(db, docker, deployService, config);
+  const convexService = new ConvexService(docker, config);
 
   await registerHealthRoute(app);
   await registerCIRoutes(app, artifactService, config);
@@ -41,6 +43,7 @@ async function main(): Promise<void> {
     discordClient = await startDiscordBot({
       config,
       artifactService,
+      convexService,
       deployService
     });
   } else {

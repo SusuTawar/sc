@@ -46,5 +46,27 @@ export const commandDefinitions = [
     .setDescription("Tail logs for app env")
     .addStringOption((o) => o.setName("app").setDescription("App name").setRequired(true))
     .addStringOption((o) => o.setName("env").setDescription("dev|staging|prod|main").setRequired(true))
-    .addIntegerOption((o) => o.setName("lines").setDescription("Number of lines").setRequired(false))
+    .addIntegerOption((o) => o.setName("lines").setDescription("Number of lines").setRequired(false)),
+  new SlashCommandBuilder()
+    .setName("convex")
+    .setDescription("Manage Convex backend instances")
+    .addSubcommand((sub) =>
+      sub
+        .setName("init")
+        .setDescription("Create a Convex backend instance")
+        .addStringOption((o) => o.setName("appname").setDescription("Subdomain name").setRequired(true))
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName("adminkey")
+        .setDescription("Get Convex admin key for an instance")
+        .addStringOption((o) => o.setName("appname").setDescription("Subdomain name").setRequired(true))
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName("remove")
+        .setDescription("Remove a Convex backend instance")
+        .addStringOption((o) => o.setName("appname").setDescription("Subdomain name").setRequired(true))
+    )
+    .addSubcommand((sub) => sub.setName("list").setDescription("List Convex backend instances"))
 ].map((cmd) => cmd.toJSON());

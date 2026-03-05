@@ -19,4 +19,4 @@ COPY package.json bun.lock ./
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/src/db/migrations ./src/db/migrations
-CMD ["bun", "dist/index.js"]
+CMD ["bun", "dist/src/index.js"]

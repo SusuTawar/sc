@@ -27,7 +27,18 @@ const envSchema = z.object({
   SC_RUN_MIGRATIONS_ON_BOOT: z
     .string()
     .optional()
-    .transform((v) => (v ? v === "true" || v === "1" : true))
+    .transform((v) => (v ? v === "true" || v === "1" : true)),
+  SC_CONVEX_IMAGE: z.string().optional().default("ghcr.io/get-convex/convex-backend:latest"),
+  SC_CONVEX_DOMAIN_SUFFIX: z.string().optional().default("your-domain.com"),
+  SC_CONVEX_SITE_ORIGIN: z.string().optional().default("https://convex.your-domain.com"),
+  SC_CONVEX_INSTANCE_NAME: z.string().optional().default("servercommander"),
+  SC_CONVEX_INSTANCE_SECRET: z.string().optional().default(""),
+  SC_CONVEX_DO_NOT_REQUIRE_SSL: z
+    .string()
+    .optional()
+    .transform((v) => (v ? v === "true" || v === "1" : true)),
+  SC_CONVEX_RUST_LOG: z.string().optional().default("info"),
+  SC_CONVEX_INTERNAL_PORT: z.coerce.number().int().positive().default(3210)
 });
 
 export type EnvConfig = z.infer<typeof envSchema> & {

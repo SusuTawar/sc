@@ -64,7 +64,7 @@ Use empty string for missing optional fields (`domain`, `init_deploy`, `internal
 #!/usr/bin/env bash
 set -euo pipefail
 
-API_URL="https://your-host/v1/ci/artifacts/upload"
+API_URL="https://your-domain.com/v1/ci/artifacts/upload"
 SECRET="${SC_WEBHOOK_SECRET}"
 APP="billing-api"
 ENV="staging"

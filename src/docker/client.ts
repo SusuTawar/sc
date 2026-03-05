@@ -108,14 +108,24 @@ export class DockerClient {
     network: string;
     envVars: Record<string, string>;
     labels: Record<string, string>;
+    volumes?: string[];
+    extraArgs?: string[];
   }): Promise<void> {
     const runArgs = ["run", "-d", "--name", args.containerName, "--restart", "unless-stopped", "--network", args.network];
 
+    if (args.volumes) {
+      for (const volume of args.volumes) {
+        runArgs.push("-v", volume);
+      }
+    }
     for (const [key, value] of Object.entries(args.envVars)) {
       runArgs.push("-e", `${key}=${value}`);
     }
     for (const [key, value] of Object.entries(args.labels)) {
       runArgs.push("-l", `${key}=${value}`);
+    }
+    if (args.extraArgs) {
+      runArgs.push(...args.extraArgs);
     }
     runArgs.push(args.imageRef);
 
@@ -154,5 +164,32 @@ export class DockerClient {
     }
     const out = `${result.stdout}\n${result.stderr}`.trim();
     return out || "(no logs)";
+  }
+
+  async execContainer(containerName: string, command: string[]): Promise<string> {
+    const result = await runDocker(["exec", containerName, ...command]);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || result.stdout);
+    }
+    return `${result.stdout}\n${result.stderr}`.trim();
+  }
+
+  async listContainersByLabel(label: string): Promise<Array<{ name: string; image: string; status: string }>> {
+    const result = await runDocker(["ps", "-a", "--filter", `label=${label}`, "--format", "{{.Names}}\t{{.Image}}\t{{.Status}}"]);
+    if (result.code !== 0) {
+      throw new Error(result.stderr || result.stdout);
+    }
+    const lines = result.stdout.trim().split(/\r?\n/).filter(Boolean);
+    return lines.map((line) => {
+      const [name, image, ...rest] = line.split("\t");
+      return { name, image, status: rest.join("\t") };
+    });
+  }
+
+  async removeVolume(volumeName: string): Promise<void> {
+    const result = await runDocker(["volume", "rm", volumeName]);
+    if (result.code !== 0 && !result.stderr.includes("No such volume")) {
+      throw new Error(result.stderr || result.stdout);
+    }
   }
 }

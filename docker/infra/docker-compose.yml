@@ -33,6 +33,9 @@ services:
         condition: service_healthy
     networks:
       - infra
+    labels:
+      caddy: ${SC_PUBLIC_DOMAIN}
+      caddy.reverse_proxy: "{{upstreams 8080}}"
 
   caddy-proxy:
     image: lucaslorentz/caddy-docker-proxy:latest
@@ -101,12 +104,41 @@ services:
     networks:
       - infra
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command:
+      - sh
+      - -c
+      - |
+        if [ -n "$$REDIS_PASSWORD" ]; then
+          exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD";
+        else
+          exec redis-server --appendonly yes;
+        fi
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "if [ -n \"$$REDIS_PASSWORD\" ]; then redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG; else redis-cli ping | grep -q PONG; fi"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - infra
+
 volumes:
   caddy_data:
   caddy_config:
   sc_upload_tmp:
   mysql_data:
   postgres_data:
+  redis_data:
 
 networks:
   infra:

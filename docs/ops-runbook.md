@@ -26,6 +26,7 @@ After start:
 
 ```bash
 curl http://127.0.0.1:8080/healthz
+curl https://your-domain.com/healthz
 docker compose ps
 ```
 
@@ -39,6 +40,7 @@ docker compose up -d
 
 This starts:
 - PostgreSQL (`5432`)
+- Redis (`6379`)
 - Service in watch mode (`8080`)
 
 ## Production Container Logs
@@ -46,6 +48,13 @@ This starts:
 ```bash
 cd docker/infra
 docker compose logs -f servercommander
+```
+
+## Redis Check
+
+```bash
+cd docker/infra
+docker compose exec redis sh -lc 'redis-cli -a "$REDIS_PASSWORD" ping'
 ```
 
 ## Deployment Lifecycle
@@ -63,14 +72,16 @@ docker compose logs -f servercommander
 2. List artifacts:
 
 ```bash
+BASE_URL="https://your-domain.com"
+
 curl -H "Authorization: Bearer <SC_API_TOKEN>" \
-  "http://127.0.0.1:8080/v1/artifacts?app=myapp&env=staging&limit=10"
+  "${BASE_URL}/v1/artifacts?app=myapp&env=staging&limit=10"
 ```
 
 3. Deploy artifact:
 
 ```bash
-curl -X POST "http://127.0.0.1:8080/v1/deployments/deploy" \
+curl -X POST "${BASE_URL}/v1/deployments/deploy" \
   -H "Authorization: Bearer <SC_API_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"app":"myapp","env":"staging","tag":"<tag>","domain":"app.example.com","internal_port":8080}'
@@ -80,7 +91,7 @@ curl -X POST "http://127.0.0.1:8080/v1/deployments/deploy" \
 
 ```bash
 curl -H "Authorization: Bearer <SC_API_TOKEN>" \
-  "http://127.0.0.1:8080/v1/deployments/status?app=myapp&env=staging"
+  "${BASE_URL}/v1/deployments/status?app=myapp&env=staging"
 ```
 
 ## Troubleshooting

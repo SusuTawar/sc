@@ -48,7 +48,7 @@ Flags:
 - If `caddy-proxy` already exists, remove it and rerun setup to mount the Caddyfile.
 - After each deployment, ServerCommander keeps the 5 most recent image tags per environment and prunes older tags for the app's image repo (best-effort; images in use are not removed).
 
-## Caddy + MySQL + PostgreSQL (Docker)
+## Caddy + MySQL + PostgreSQL + Redis (Docker)
 
 Use this stack on a fresh host if you want Caddy and both databases via Docker:
 
@@ -64,11 +64,14 @@ docker compose ps
 Notes:
 
 - MySQL and PostgreSQL are bound to `127.0.0.1` only by default.
+- Redis is bound to `127.0.0.1` only by default.
 - Change all default passwords in `.env` before starting.
 - `servercommander` app also runs as a container in this stack.
 - The app manages host Docker through `/var/run/docker.sock` mount.
 - `caddy-proxy` auto-routes containers using Docker labels (`caddy`, `caddy.reverse_proxy`).
 - If port `80/443` is already used (for example by `caddy-proxy`), stop/remove the conflicting container first.
+- Redis from host: `redis://:<REDIS_PASSWORD>@127.0.0.1:<REDIS_PORT>/0`
+- Redis from same Docker network: `redis://:<REDIS_PASSWORD>@redis:6379/0`
 
 ## CI Artifact Deploys (No Registry Pull)
 
@@ -111,6 +114,7 @@ nano .env
 
 Minimum required values to change in `.env`:
 
+- `SC_PUBLIC_DOMAIN`
 - `SC_WEBHOOK_SECRET`
 - `SC_API_TOKEN`
 - `SC_DISCORD_ENABLED` (`false` if you do not want Discord yet)
@@ -127,10 +131,18 @@ docker compose up -d --build
 docker compose ps
 ```
 
+Redis quick check:
+
+```bash
+docker compose exec redis sh -lc 'redis-cli -a "$REDIS_PASSWORD" ping'
+```
+
+
 5. Verify service is healthy:
 
 ```bash
 curl http://127.0.0.1:8080/healthz
+curl https://your-domain.com/healthz
 docker compose logs -f servercommander
 ```
 
@@ -144,14 +156,16 @@ Full contract and signing example:
 2. List uploaded artifacts (token required):
 
 ```bash
+BASE_URL="https://your-domain.com"
+
 curl -H "Authorization: Bearer <SC_API_TOKEN>" \
-  "http://127.0.0.1:8080/v1/artifacts?app=myapp&env=staging&limit=10"
+  "${BASE_URL}/v1/artifacts?app=myapp&env=staging&limit=10"
 ```
 
 3. Deploy uploaded artifact via API:
 
 ```bash
-curl -X POST "http://127.0.0.1:8080/v1/deployments/deploy" \
+curl -X POST "${BASE_URL}/v1/deployments/deploy" \
   -H "Authorization: Bearer <SC_API_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"app":"myapp","env":"staging","tag":"<tag>","domain":"app.example.com","internal_port":8080}'
@@ -161,26 +175,26 @@ curl -X POST "http://127.0.0.1:8080/v1/deployments/deploy" \
 
 ```bash
 curl -H "Authorization: Bearer <SC_API_TOKEN>" \
-  "http://127.0.0.1:8080/v1/deployments/status?app=myapp&env=staging"
+  "${BASE_URL}/v1/deployments/status?app=myapp&env=staging"
 ```
 
 5. Lifecycle actions:
 
 ```bash
 # restart
-curl -X POST "http://127.0.0.1:8080/v1/deployments/restart" \
+curl -X POST "${BASE_URL}/v1/deployments/restart" \
   -H "Authorization: Bearer <SC_API_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"app":"myapp","env":"staging"}'
 
 # stop
-curl -X POST "http://127.0.0.1:8080/v1/deployments/stop" \
+curl -X POST "${BASE_URL}/v1/deployments/stop" \
   -H "Authorization: Bearer <SC_API_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"app":"myapp","env":"staging"}'
 
 # delete
-curl -X POST "http://127.0.0.1:8080/v1/deployments/delete" \
+curl -X POST "${BASE_URL}/v1/deployments/delete" \
   -H "Authorization: Bearer <SC_API_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{"app":"myapp","env":"staging"}'
