@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: sc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: servercommander
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - sc_postgres_data:/var/lib/postgresql/data
+
+  servercommander:
+    image: oven/bun:1.2.22
+    container_name: sc-api
+    restart: unless-stopped
+    working_dir: /app
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: sh -c "bun install && bun run db:migrate && bun run dev"
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+
+volumes:
+  sc_postgres_data:
