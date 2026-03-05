@@ -2,3 +2,29 @@
 	# Optional global email for ACME. Replace with your real email.
 	email {$CADDY_EMAIL}
 }
+
+(convex_cors) {
+	@cors_preflight {
+		method OPTIONS
+		header Origin *
+	}
+
+	@cors header Origin *
+
+	# Preflight: respond 204 with CORS headers, never hits the backend
+	handle @cors_preflight {
+		header Access-Control-Allow-Origin "{$SC_CONVEX_SITE_ORIGIN}"
+		header Access-Control-Allow-Credentials "true"
+		header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+		header Access-Control-Allow-Headers "authorization,content-type,x-requested-with,convex-client"
+		header Vary "Origin"
+		respond "" 204
+	}
+
+	# Deferred (>) ops run AFTER reverse_proxy, replacing upstream CORS headers
+	header @cors >Access-Control-Allow-Origin "{$SC_CONVEX_SITE_ORIGIN}"
+	header @cors >Access-Control-Allow-Credentials "true"
+	header @cors >Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+	header @cors >Access-Control-Allow-Headers "authorization,content-type,x-requested-with,convex-client"
+	header @cors >Vary "Origin"
+}

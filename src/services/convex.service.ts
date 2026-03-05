@@ -1,6 +1,5 @@
 import type { EnvConfig } from "../config/env.js";
 import { DockerClient } from "../docker/client.js";
-import { buildCaddyDockerProxyLabels } from "./caddy.js";
 
 const CONVEX_LABEL_KEY = "sc.convex.app";
 
@@ -27,7 +26,7 @@ export class ConvexService {
   constructor(
     private readonly docker: DockerClient,
     private readonly config: EnvConfig
-  ) {}
+  ) { }
 
   async init(appName: string): Promise<{ containerName: string; domain: string; status: string }> {
     const slug = slugifyAppName(appName);
@@ -43,19 +42,15 @@ export class ConvexService {
     const envVars = {
       CONVEX_CLOUD_ORIGIN: `https://${domain}`,
       CONVEX_SITE_ORIGIN: this.config.SC_CONVEX_SITE_ORIGIN,
-      INSTANCE_NAME: this.config.SC_CONVEX_INSTANCE_NAME,
+      INSTANCE_NAME: slug,
       INSTANCE_SECRET: this.config.SC_CONVEX_INSTANCE_SECRET,
       DO_NOT_REQUIRE_SSL: this.config.SC_CONVEX_DO_NOT_REQUIRE_SSL ? "true" : "false",
       RUST_LOG: this.config.SC_CONVEX_RUST_LOG
     };
 
     const labels = {
-      ...buildCaddyDockerProxyLabels({
-        enabled: this.config.SC_CADDY_MODE === "docker-proxy",
-        domain,
-        internalPort: this.config.SC_CONVEX_INTERNAL_PORT
-      }),
-      [CONVEX_LABEL_KEY]: slug
+      [CONVEX_LABEL_KEY]: slug,
+      ...this.buildProxyLabels(domain)
     };
 
     await this.docker.runContainer({
@@ -115,5 +110,17 @@ export class ConvexService {
 
   private domainSuffix(): string {
     return this.config.SC_CONVEX_DOMAIN_SUFFIX.replace(/^\.+/, "").trim();
+  }
+
+  private buildProxyLabels(domain: string): Record<string, string> {
+    if (this.config.SC_CADDY_MODE !== "docker-proxy") {
+      return {};
+    }
+
+    return {
+      caddy: domain,
+      "caddy.0_import": "convex_cors",
+      "caddy.1_reverse_proxy": `{{upstreams ${this.config.SC_CONVEX_INTERNAL_PORT}}}`,
+    };
   }
 }
